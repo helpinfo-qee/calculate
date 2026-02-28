@@ -8,14 +8,14 @@
         .input-group { margin-bottom: 15px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         label { display: block; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 600; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: border 0.2s; }
-        input:focus { border-color: #000; outline: none; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: border 0.2s; background: #fff; }
+        input:focus, select:focus { border-color: #000; outline: none; }
         button { width: 100%; padding: 14px; background: #000; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; margin-top: 10px; transition: background 0.2s; }
         button:hover { background: #333; }
         .results { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: none; }
         .res-row { font-size: 14px; line-height: 1.5; color: #333; }
         .res-row span { font-weight: 700; color: #d32f2f; }
-        .info-tag { font-size: 10px; color: #999; margin-top: 10px; text-align: center; }
+        .info-tag { font-size: 10px; color: #999; margin-top: 10px; text-align: center; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -37,9 +37,18 @@
         <input type="number" id="h1" value="5" step="0.1">
     </div>
 
-    <div class="input-group">
-        <label>Световой поток (лм)</label>
-        <input type="number" id="f1" value="3600">
+    <div class="grid">
+        <div class="input-group">
+            <label>Тип рассеивателя</label>
+            <select id="type">
+                <option value="Prizma">Prizma</option>
+                <option value="Opal">Opal</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Световой поток (лм)</label>
+            <input type="number" id="f1" value="3600">
+        </div>
     </div>
 
     <div class="input-group">
@@ -53,68 +62,72 @@
         <div class="res-row" id="final_text"></div>
     </div>
     
-    <div class="info-tag">Коэф. запаса: 1.7 | Раб. поверхность: 1м</div>
+    <div class="info-tag">
+        Коэффициент запаса: 1.7 | Рабочая поверхность: 1м<br>
+        Коэффициент неравномерности: 1.1
+    </div>
 </div>
 
 <script>
 function calc10() {
-    // 1. Сбор данных
     const e = parseFloat(document.getElementById('e1').value);
     const a = parseFloat(document.getElementById('a1').value);
     const b = parseFloat(document.getElementById('b1').value);
     const h = parseFloat(document.getElementById('h1').value);
     const f = parseFloat(document.getElementById('f1').value);
+    const strategy = document.getElementById('type').value;
 
-    // 2. Константы (фиксированные согласно вашей инструкции и скрипту)
-    const k = 1.1; // Коэф. неравномерности
-    const z = 1.7; // Коэф. запаса
-    const h1_susp = 0; // Высота подвеса
-    const h2_work = 1; // Высота раб. поверхности
+    // Константы согласно методике
+    const k_nerav = 1.1; // Коэффициент неравномерности
+    const k_zapas = 1.7; // Коэффициент запаса
+    const h_susp = 0;    // Длина подвеса
+    const h_work = 1;    // Рабочая поверхность
     const origin_lamp_count = 1;
 
-    // 3. Коэффициенты использования (ваши значения KI)
-    const ki = {
-        0.6: 62, 0.8: 74, 1.0: 84, 1.25: 94, 1.5: 101,
-        2.0: 111, 2.5: 117, 3.0: 121, 4.0: 127, 5.0: 130
+    // Коэффициенты использования (KI)
+    const kiData = {
+        Prizma: { 0.6: 62, 0.8: 74, 1.0: 84, 1.25: 94, 1.5: 101, 2.0: 111, 2.5: 117, 3.0: 121, 4.0: 127, 5.0: 130 },
+        Opal:   { 0.6: 44, 0.8: 53, 1.0: 61, 1.25: 69, 1.5: 75, 2.0: 84, 2.5: 89, 3.0: 93, 4.0: 98, 5.0: 101 }
     };
 
-    // 4. Расчет индекса помещения
-    const hp = h - h1_susp - h2_work;
+    const currentKI = kiData[strategy];
+
+    const hp = h - h_susp - h_work;
     if (hp <= 0) {
-        alert("Ошибка: Высота потолка должна быть больше 1 метра");
+        alert("Ошибка: Высота помещения должна быть больше рабочей поверхности (1 метр)");
         return;
     }
+
+    // Расчет индекса помещения (nn)
     const nn = (a * b) / (hp * (a + b));
 
-    // 5. Логика выбора KI (nnout) из вашего скрипта
+    // Выбор KI по ступенчатой логике сайта
     let nnout = 0;
-    if (nn < 0.7) nnout = ki[0.6];
-    else if (nn < 0.9) nnout = ki[0.8];
-    else if (nn < 1.125) nnout = ki[1.0];
-    else if (nn < 1.375) nnout = ki[1.25];
-    else if (nn < 1.75) nnout = ki[1.5];
-    else if (nn < 2.25) nnout = ki[2.0];
-    else if (nn < 2.75) nnout = ki[2.5];
-    else if (nn < 3.5) nnout = ki[3.0];
-    else if (nn < 4.5) nnout = ki[4.0];
-    else nnout = ki[5.0];
+    if (nn < 0.7) nnout = currentKI[0.6];
+    else if (nn < 0.9) nnout = currentKI[0.8];
+    else if (nn < 1.125) nnout = currentKI[1.0];
+    else if (nn < 1.375) nnout = currentKI[1.25];
+    else if (nn < 1.75) nnout = currentKI[1.5];
+    else if (nn < 2.25) nnout = currentKI[2.0];
+    else if (nn < 2.75) nnout = currentKI[2.5];
+    else if (nn < 3.5) nnout = currentKI[3.0];
+    else if (nn < 4.5) nnout = currentKI[4.0];
+    else nnout = currentKI[5.0];
 
-    // 6. Расчет количества (Math.ceil — округление вверх)
-    const count = (e * a * b * k * z * 100) / (f * nnout * origin_lamp_count);
+    // Расчет количества светильников (округление вверх)
+    const count = (e * a * b * k_nerav * k_zapas * 100) / (f * nnout * origin_lamp_count);
     const N = Math.ceil(count);
 
-    // 7. Расчет средней освещенности (Math.floor — округление вниз)
-    const e_average = (N * f * nnout * origin_lamp_count) / (a * b * k * z * 100);
+    // Расчет фактической средней освещенности (округление вниз)
+    const e_average = (N * f * nnout * origin_lamp_count) / (a * b * k_nerav * k_zapas * 100);
 
-    // 8. Вывод результата
     const resultsDiv = document.getElementById('results');
     const textDiv = document.getElementById('final_text');
     
     resultsDiv.style.display = 'block';
-    textDiv.innerHTML = "Количество светильников <span>" + N + " шт</span>, при минимальной средней освещенности <span>" + Math.floor(e_average) + " лк</span>";
+    textDiv.innerHTML = "Количество светильников" +": <span>" + N + " шт</span>, при минимальной средней освещенности <span>" + Math.floor(e_average) + " лк</span>";
 }
 </script>
 
 </body>
 </html>
-
