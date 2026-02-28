@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: transparent; padding: 10px; }
+        .calc-container { background: #ffffff; border: 1px solid #e9e9e9; padding: 20px; border-radius: 12px; max-width: 380px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .input-group { margin-bottom: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        label { display: block; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 600; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: border 0.2s; }
+        input:focus { border-color: #000; outline: none; }
+        button { width: 100%; padding: 14px; background: #000; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; margin-top: 10px; transition: background 0.2s; }
+        button:hover { background: #333; }
+        .results { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: none; }
+        .res-row { font-size: 14px; line-height: 1.5; color: #333; }
+        .res-row span { font-weight: 700; color: #d32f2f; }
+        .info-tag { font-size: 10px; color: #999; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="calc-container">
+    <div class="grid">
+        <div class="input-group">
+            <label>Длина (м)</label>
+            <input type="number" id="a1" value="10" step="0.1">
+        </div>
+        <div class="input-group">
+            <label>Ширина (м)</label>
+            <input type="number" id="b1" value="10" step="0.1">
+        </div>
+    </div>
+    
+    <div class="input-group">
+        <label>Высота помещения (м)</label>
+        <input type="number" id="h1" value="5" step="0.1">
+    </div>
+
+    <div class="input-group">
+        <label>Световой поток (лм)</label>
+        <input type="number" id="f1" value="3623">
+    </div>
+
+    <div class="input-group">
+        <label>Требуемая освещенность (лк)</label>
+        <input type="number" id="e1" value="350">
+    </div>
+
+    <button onclick="calc10()">Рассчитать по инструкции</button>
+
+    <div id="results" class="results">
+        <div class="res-row" id="final_text"></div>
+    </div>
+    
+    <div class="info-tag">Коэф. запаса: 1.7 | Раб. поверхность: 1м</div>
+</div>
+
+<script>
+function calc10() {
+    // 1. Сбор данных
+    const e = parseFloat(document.getElementById('e1').value);
+    const a = parseFloat(document.getElementById('a1').value);
+    const b = parseFloat(document.getElementById('b1').value);
+    const h = parseFloat(document.getElementById('h1').value);
+    const f = parseFloat(document.getElementById('f1').value);
+
+    // 2. Константы (фиксированные согласно вашей инструкции и скрипту)
+    const k = 1.1; // Коэф. неравномерности
+    const z = 1.7; // Коэф. запаса
+    const h1_susp = 0; // Высота подвеса
+    const h2_work = 1; // Высота раб. поверхности
+    const origin_lamp_count = 1;
+
+    // 3. Коэффициенты использования (ваши значения KI)
+    const ki = {
+        0.6: 62, 0.8: 74, 1.0: 84, 1.25: 94, 1.5: 101,
+        2.0: 111, 2.5: 117, 3.0: 121, 4.0: 127, 5.0: 130
+    };
+
+    // 4. Расчет индекса помещения
+    const hp = h - h1_susp - h2_work;
+    if (hp <= 0) {
+        alert("Ошибка: Высота потолка должна быть больше 1 метра");
+        return;
+    }
+    const nn = (a * b) / (hp * (a + b));
+
+    // 5. Логика выбора KI (nnout) из вашего скрипта
+    let nnout = 0;
+    if (nn < 0.7) nnout = ki[0.6];
+    else if (nn < 0.9) nnout = ki[0.8];
+    else if (nn < 1.125) nnout = ki[1.0];
+    else if (nn < 1.375) nnout = ki[1.25];
+    else if (nn < 1.75) nnout = ki[1.5];
+    else if (nn < 2.25) nnout = ki[2.0];
+    else if (nn < 2.75) nnout = ki[2.5];
+    else if (nn < 3.5) nnout = ki[3.0];
+    else if (nn < 4.5) nnout = ki[4.0];
+    else nnout = ki[5.0];
+
+    // 6. Расчет количества (Math.ceil — округление вверх)
+    const count = (e * a * b * k * z * 100) / (f * nnout * origin_lamp_count);
+    const N = Math.ceil(count);
+
+    // 7. Расчет средней освещенности (Math.floor — округление вниз)
+    const e_average = (N * f * nnout * origin_lamp_count) / (a * b * k * z * 100);
+
+    // 8. Вывод результата
+    const resultsDiv = document.getElementById('results');
+    const textDiv = document.getElementById('final_text');
+    
+    resultsDiv.style.display = 'block';
+    textDiv.innerHTML = "Количество светильников <span>" + N + " шт</span>, при минимальной средней освещенности <span>" + Math.floor(e_average) + " лк</span>";
+}
+</script>
+
+</body>
+</html>
