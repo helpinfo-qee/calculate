@@ -24,17 +24,17 @@
     <div class="grid">
         <div class="input-group">
             <label>Длина (м)</label>
-            <input type="number" id="a1" value="10" step="0.1">
+            <input type="number" id="a1" step="0.1">
         </div>
         <div class="input-group">
             <label>Ширина (м)</label>
-            <input type="number" id="b1" value="10" step="0.1">
+            <input type="number" id="b1" step="0.1">
         </div>
     </div>
     
     <div class="input-group">
         <label>Высота помещения (м)</label>
-        <input type="number" id="h1" value="5" step="0.1">
+        <input type="number" id="h1" step="0.1">
     </div>
 
     <div class="grid">
@@ -47,13 +47,13 @@
         </div>
         <div class="input-group">
             <label>Световой поток (лм)</label>
-            <input type="number" id="f1" value="3600">
+            <input type="number" id="f1">
         </div>
     </div>
 
     <div class="input-group">
         <label>Требуемая освещенность (лк)</label>
-        <input type="number" id="e1" value="350">
+        <input type="number" id="e1">
     </div>
 
     <button onclick="calc10()">Рассчитать по инструкции</button>
@@ -69,6 +69,47 @@
 </div>
 
 <script>
+// Дефолтные значения
+const DEFAULTS = {
+    a1:   '10',
+    b1:   '10',
+    h1:   '5',
+    type: 'Prizma',
+    f1:   '3600',
+    e1:   '350'
+};
+
+// Читаем URL params, подставляем дефолты если параметра нет
+function loadFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    for (const [key, def] of Object.entries(DEFAULTS)) {
+        const el = document.getElementById(key);
+        if (!el) continue;
+        const val = params.has(key) ? params.get(key) : def;
+        el.value = val;
+    }
+    // Записываем полный набор параметров в URL (включая дефолты)
+    updateURL();
+}
+
+// Обновляем URL без перезагрузки страницы
+function updateURL() {
+    const params = new URLSearchParams();
+    for (const key of Object.keys(DEFAULTS)) {
+        const el = document.getElementById(key);
+        if (el) params.set(key, el.value);
+    }
+    history.replaceState(null, '', '?' + params.toString());
+}
+
+// Вешаем обновление URL на все поля
+function bindInputs() {
+    for (const key of Object.keys(DEFAULTS)) {
+        const el = document.getElementById(key);
+        if (el) el.addEventListener('input', updateURL);
+    }
+}
+
 function calc10() {
     const e = parseFloat(document.getElementById('e1').value);
     const a = parseFloat(document.getElementById('a1').value);
@@ -77,31 +118,27 @@ function calc10() {
     const f = parseFloat(document.getElementById('f1').value);
     const strategy = document.getElementById('type').value;
 
-    // Константы согласно методике
-    const k_nerav = 1.1; // Коэффициент неравномерности
-    const k_zapas = 1.7; // Коэффициент запаса
-    const h_susp = 0;    // Длина подвеса
-    const h_work = 1;    // Рабочая поверхность
+    const k_nerav = 1.1;
+    const k_zapas = 1.7;
+    const h_susp = 0;
+    const h_work = 1;
     const origin_lamp_count = 1;
 
-    // Коэффициенты использования (KI)
     const kiData = {
         Prizma: { 0.6: 62, 0.8: 74, 1.0: 84, 1.25: 94, 1.5: 101, 2.0: 111, 2.5: 117, 3.0: 121, 4.0: 127, 5.0: 130 },
         Opal:   { 0.6: 44, 0.8: 53, 1.0: 61, 1.25: 69, 1.5: 75, 2.0: 84, 2.5: 89, 3.0: 93, 4.0: 98, 5.0: 101 }
     };
 
     const currentKI = kiData[strategy];
-
     const hp = h - h_susp - h_work;
+
     if (hp <= 0) {
         alert("Ошибка: Высота помещения должна быть больше рабочей поверхности (1 метр)");
         return;
     }
 
-    // Расчет индекса помещения (nn)
     const nn = (a * b) / (hp * (a + b));
 
-    // Выбор KI по ступенчатой логике сайта
     let nnout = 0;
     if (nn < 0.7) nnout = currentKI[0.6];
     else if (nn < 0.9) nnout = currentKI[0.8];
@@ -114,19 +151,20 @@ function calc10() {
     else if (nn < 4.5) nnout = currentKI[4.0];
     else nnout = currentKI[5.0];
 
-    // Расчет количества светильников (округление вверх)
     const count = (e * a * b * k_nerav * k_zapas * 100) / (f * nnout * origin_lamp_count);
     const N = Math.ceil(count);
-
-    // Расчет фактической средней освещенности (округление вниз)
     const e_average = (N * f * nnout * origin_lamp_count) / (a * b * k_nerav * k_zapas * 100);
 
     const resultsDiv = document.getElementById('results');
     const textDiv = document.getElementById('final_text');
     
     resultsDiv.style.display = 'block';
-    textDiv.innerHTML = "Количество светильников" +": <span>" + N + " шт</span>, при минимальной средней освещенности <span>" + Math.floor(e_average) + " лк</span>";
+    textDiv.innerHTML = "Количество светильников" + ": <span>" + N + " шт</span>, при минимальной средней освещенности <span>" + Math.floor(e_average) + " лк</span>";
 }
+
+// Инициализация
+loadFromURL();
+bindInputs();
 </script>
 
 </body>
