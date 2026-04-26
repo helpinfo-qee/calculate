@@ -303,7 +303,7 @@ function getLayoutCandidates(N_min, roomA, roomB) {
 }
 
 // ── State ────────────────────────────────────────────────────────────────
-let gRoom = null, gEData = null;
+let gRoom = null, gEData = null, gCountRaw = 0, gNmin = 0;
 
 // ── Draw ─────────────────────────────────────────────────────────────────
 function drawRoom(rows, cols) {
@@ -421,6 +421,12 @@ function drawRoom(rows, cols) {
     document.getElementById('statLayout').textContent = rows + '×' + cols;
     document.getElementById('statE').textContent = e_actual + ' лк';
     document.getElementById('statStep').textContent = (a / cols).toFixed(1) + '×' + (b / rows).toFixed(1);
+
+    // Update header count to match selected layout
+    document.getElementById('resultCount').textContent = N + ' шт';
+    const overStr = N > gNmin ? ' (раскладка +' + (N - gNmin) + ')' : '';
+    document.getElementById('resultSub').textContent =
+        'Расчётное: ' + gCountRaw.toFixed(2) + ' → округлено вверх' + overStr;
 }
 
 // ── Calc ─────────────────────────────────────────────────────────────────
@@ -460,10 +466,8 @@ function calc10() {
 
     gRoom = { a, b };
     gEData = { nnout, f, k_nerav, k_zapas };
-
-    document.getElementById('resultCount').textContent = N_min + ' шт';
-    document.getElementById('resultSub').textContent =
-        'Расчётное: ' + countRaw.toFixed(2) + ' → округлено вверх';
+    gCountRaw = countRaw;
+    gNmin = N_min;
 
     const candidates = getLayoutCandidates(N_min, a, b);
 
