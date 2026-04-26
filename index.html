@@ -2,114 +2,428 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: transparent; padding: 10px; }
-        .calc-container { background: #ffffff; border: 1px solid #e9e9e9; padding: 20px; border-radius: 12px; max-width: 380px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .input-group { margin-bottom: 15px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        label { display: block; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 600; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; transition: border 0.2s; background: #fff; }
-        input:focus, select:focus { border-color: #000; outline: none; }
-        button { width: 100%; padding: 14px; background: #000; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; margin-top: 10px; transition: background 0.2s; }
-        button:hover { background: #333; }
-        .results { margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: none; }
-        .res-row { font-size: 14px; line-height: 1.5; color: #333; }
-        .res-row span { font-weight: 700; color: #d32f2f; }
-        .info-tag { font-size: 10px; color: #999; margin-top: 10px; text-align: center; line-height: 1.4; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Unbounded:wght@400;700&display=swap');
+
+        :root {
+            --bg: #f4f3ef;
+            --card: #ffffff;
+            --border: #e0dfd9;
+            --text: #1a1a18;
+            --muted: #888880;
+            --accent: #d32f2f;
+            --accent2: #1a1a18;
+            --lamp: #f5c842;
+            --lamp-stroke: #c9971a;
+            --shadow: 0 2px 16px rgba(0,0,0,0.07);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 24px 16px 48px;
+            color: var(--text);
+        }
+
+        .wrapper { max-width: 420px; margin: 0 auto; }
+
+        .header { margin-bottom: 20px; }
+        .header h1 {
+            font-family: 'Unbounded', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .header p { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 14px;
+        }
+
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+        .field:last-child { margin-bottom: 0; }
+        label {
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+        input, select {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 9px 11px;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            background: #fafaf8;
+            color: var(--text);
+            transition: border-color 0.15s, background 0.15s;
+            width: 100%;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--accent2); background: #fff; }
+
+        .btn {
+            width: 100%;
+            padding: 13px;
+            background: var(--accent2);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Unbounded', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 14px;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .btn:hover { background: #333; }
+        .btn:active { transform: scale(0.99); }
+
+        .results-card { display: none; }
+        .results-card.visible { display: block; }
+
+        .result-main {
+            font-family: 'Unbounded', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .result-sub { font-size: 10px; color: var(--muted); margin-bottom: 16px; }
+
+        .layout-variants { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+        .variant-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 11px;
+            border: 1.5px solid var(--border);
+            border-radius: 5px;
+            background: #fafaf8;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+        .variant-btn:hover { border-color: #aaa; color: var(--text); }
+        .variant-btn.active { border-color: var(--accent2); background: var(--accent2); color: #fff; }
+        .variant-btn .badge { font-size: 9px; opacity: 0.65; margin-left: 2px; }
+
+        .viz-wrap {
+            background: #f9f8f5;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        #vizCanvas { display: block; width: 100%; }
+
+        .viz-legend {
+            display: flex;
+            gap: 14px;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--muted);
+            align-items: center;
+        }
+        .leg-item { display: flex; align-items: center; gap: 5px; }
+        .leg-dot {
+            width: 9px; height: 9px; border-radius: 50%;
+            background: var(--lamp); border: 1.5px solid var(--lamp-stroke); flex-shrink: 0;
+        }
+
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .stat-box {
+            background: #fafaf8;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 10px 10px 8px;
+        }
+        .stat-val {
+            font-family: 'Unbounded', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+        }
+        .stat-val.green { color: #2e7d32; }
+        .stat-lbl { font-size: 9px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+        .info-tag { font-size: 9px; color: var(--muted); text-align: center; line-height: 1.6; margin-top: 10px; }
     </style>
 </head>
 <body>
+<div class="wrapper">
 
-<div class="calc-container">
-    <div class="grid">
-        <div class="input-group">
-            <label>Длина (м)</label>
-            <input type="number" id="a1" step="0.1">
+    <div class="header">
+        <h1>Расчёт освещения</h1>
+        <p>Метод коэффициента использования светового потока</p>
+    </div>
+
+    <div class="card">
+        <div class="grid2">
+            <div class="field">
+                <label>Длина (м)</label>
+                <input type="number" id="a1" step="0.1">
+            </div>
+            <div class="field">
+                <label>Ширина (м)</label>
+                <input type="number" id="b1" step="0.1">
+            </div>
         </div>
-        <div class="input-group">
-            <label>Ширина (м)</label>
-            <input type="number" id="b1" step="0.1">
+
+        <div class="field">
+            <label>Высота помещения (м)</label>
+            <input type="number" id="h1" step="0.1">
+        </div>
+
+        <div class="grid2">
+            <div class="field">
+                <label>Тип рассеивателя</label>
+                <select id="type">
+                    <option value="Prizma">Prizma</option>
+                    <option value="Opal">Opal</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Световой поток (лм)</label>
+                <input type="number" id="f1">
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Требуемая освещённость (лк)</label>
+            <input type="number" id="e1">
+        </div>
+
+        <button class="btn" onclick="calc10()">Рассчитать</button>
+    </div>
+
+    <div class="results-card card" id="resultsCard">
+        <div class="result-main" id="resultCount">—</div>
+        <div class="result-sub" id="resultSub"></div>
+
+        <div class="layout-variants" id="variantButtons"></div>
+
+        <div class="viz-wrap">
+            <canvas id="vizCanvas"></canvas>
+        </div>
+
+        <div class="viz-legend">
+            <div class="leg-item"><div class="leg-dot"></div><span>Светильник</span></div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-box">
+                <div class="stat-val" id="statLayout">—</div>
+                <div class="stat-lbl">Раскладка</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" id="statE">—</div>
+                <div class="stat-lbl">Факт. лк</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val green" id="statStep">—</div>
+                <div class="stat-lbl">Шаг, м</div>
+            </div>
         </div>
     </div>
-    
-    <div class="input-group">
-        <label>Высота помещения (м)</label>
-        <input type="number" id="h1" step="0.1">
-    </div>
 
-    <div class="grid">
-        <div class="input-group">
-            <label>Тип рассеивателя</label>
-            <select id="type">
-                <option value="Prizma">Prizma</option>
-                <option value="Opal">Opal</option>
-            </select>
-        </div>
-        <div class="input-group">
-            <label>Световой поток (лм)</label>
-            <input type="number" id="f1">
-        </div>
-    </div>
-
-    <div class="input-group">
-        <label>Требуемая освещенность (лк)</label>
-        <input type="number" id="e1">
-    </div>
-
-    <button onclick="calc10()">Рассчитать по инструкции</button>
-
-    <div id="results" class="results">
-        <div class="res-row" id="final_text"></div>
-    </div>
-    
     <div class="info-tag">
-        Коэффициент запаса: 1.7 | Рабочая поверхность: 1м<br>
-        Коэффициент неравномерности: 1.1
+        Коэффициент запаса: 1.7 · Рабочая поверхность: 1 м · Коэффициент неравномерности: 1.1
     </div>
 </div>
 
 <script>
-// Дефолтные значения
-const DEFAULTS = {
-    a1:   '10',
-    b1:   '10',
-    h1:   '5',
-    type: 'Prizma',
-    f1:   '3600',
-    e1:   '350'
-};
+// ── Defaults & URL sync ──────────────────────────────────────────────────
+const DEFAULTS = { a1:'10', b1:'10', h1:'5', type:'Prizma', f1:'3600', e1:'350' };
 
-// Читаем URL params, подставляем дефолты если параметра нет
 function loadFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    for (const [key, def] of Object.entries(DEFAULTS)) {
-        const el = document.getElementById(key);
-        if (!el) continue;
-        const val = params.has(key) ? params.get(key) : def;
-        el.value = val;
+    const p = new URLSearchParams(window.location.search);
+    for (const [k, def] of Object.entries(DEFAULTS)) {
+        document.getElementById(k).value = p.has(k) ? p.get(k) : def;
     }
-    // Записываем полный набор параметров в URL (включая дефолты)
     updateURL();
 }
-
-// Обновляем URL без перезагрузки страницы
 function updateURL() {
-    const params = new URLSearchParams();
-    for (const key of Object.keys(DEFAULTS)) {
-        const el = document.getElementById(key);
-        if (el) params.set(key, el.value);
-    }
-    history.replaceState(null, '', '?' + params.toString());
+    const p = new URLSearchParams();
+    for (const k of Object.keys(DEFAULTS)) p.set(k, document.getElementById(k).value);
+    history.replaceState(null, '', '?' + p.toString());
 }
-
-// Вешаем обновление URL на все поля
 function bindInputs() {
-    for (const key of Object.keys(DEFAULTS)) {
-        const el = document.getElementById(key);
-        if (el) el.addEventListener('input', updateURL);
+    for (const k of Object.keys(DEFAULTS)) {
+        document.getElementById(k).addEventListener('input', updateURL);
     }
 }
 
+// ── Layout candidates ────────────────────────────────────────────────────
+function getLayoutCandidates(N_min, roomA, roomB) {
+    const ratio = Math.max(roomA, roomB) / Math.min(roomA, roomB);
+    const candidates = [];
+
+    for (let total = N_min; total <= N_min + 10; total++) {
+        for (let r = 1; r <= Math.sqrt(total) + 1; r++) {
+            const c = Math.round(total / r);
+            if (r * c !== total) continue;
+            const lo = Math.min(r, c), hi = Math.max(r, c);
+
+            const layoutRatio = hi / lo;
+            const ratioDiff = Math.abs(layoutRatio - ratio);
+            const oddPenalty = (lo % 2 !== 0 || hi % 2 !== 0) ? 0.15 : 0;
+            const overshoot = (total - N_min) * 0.1;
+            const score = ratioDiff + oddPenalty + overshoot;
+            candidates.push({ rows: lo, cols: hi, total, score });
+        }
+    }
+
+    candidates.sort((a, b) => a.score - b.score);
+    const seen = new Set();
+    const out = [];
+    for (const c of candidates) {
+        const key = c.rows + 'x' + c.cols;
+        if (!seen.has(key)) { seen.add(key); out.push(c); }
+        if (out.length >= 5) break;
+    }
+    return out;
+}
+
+// ── State ────────────────────────────────────────────────────────────────
+let gRoom = null, gEData = null;
+
+// ── Draw ─────────────────────────────────────────────────────────────────
+function drawRoom(rows, cols) {
+    const canvas = document.getElementById('vizCanvas');
+    const ctx = canvas.getContext('2d');
+    const { a, b } = gRoom;
+
+    const PAD = 32;
+    const maxW = Math.min(380, canvas.parentElement.clientWidth) - PAD * 2;
+    const maxH = 220;
+    const scale = Math.min(maxW / a, maxH / b);
+    const W = a * scale, H = b * scale;
+    const DPR = window.devicePixelRatio || 1;
+
+    canvas.width  = (W + PAD * 2) * DPR;
+    canvas.height = (H + PAD * 2 + 18) * DPR;
+    canvas.style.width  = (W + PAD * 2) + 'px';
+    canvas.style.height = (H + PAD * 2 + 18) + 'px';
+    ctx.scale(DPR, DPR);
+
+    const OX = PAD, OY = PAD;
+
+    // Room fill
+    ctx.fillStyle = '#fafaf8';
+    ctx.fillRect(OX, OY, W, H);
+
+    // Grid cells (dashed)
+    ctx.strokeStyle = '#e0ddd5';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([3, 4]);
+    for (let c = 1; c < cols; c++) {
+        const x = OX + W * c / cols;
+        ctx.beginPath(); ctx.moveTo(x, OY); ctx.lineTo(x, OY + H); ctx.stroke();
+    }
+    for (let r = 1; r < rows; r++) {
+        const y = OY + H * r / rows;
+        ctx.beginPath(); ctx.moveTo(OX, y); ctx.lineTo(OX + W, y); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Glow zones
+    const cw = W / cols, ch = H / rows;
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const cx = OX + cw * (c + 0.5), cy = OY + ch * (r + 0.5);
+            const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(cw, ch) * 0.6);
+            gr.addColorStop(0,   'rgba(255,225,80,0.2)');
+            gr.addColorStop(0.6, 'rgba(255,200,40,0.07)');
+            gr.addColorStop(1,   'rgba(255,180,0,0)');
+            ctx.fillStyle = gr;
+            ctx.beginPath(); ctx.arc(cx, cy, Math.min(cw, ch) * 0.6, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    // Room border
+    ctx.strokeStyle = '#1a1a18';
+    ctx.lineWidth = 1.8;
+    ctx.strokeRect(OX, OY, W, H);
+
+    // Dimension labels
+    ctx.fillStyle = '#999';
+    ctx.font = `600 9px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(a + ' м', OX + W / 2, OY - 10);
+    ctx.save();
+    ctx.translate(OX - 10, OY + H / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(b + ' м', 0, 0);
+    ctx.restore();
+
+    // Lamps
+    const lampR = Math.max(4, Math.min(10, Math.min(cw, ch) * 0.15));
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const cx = OX + cw * (c + 0.5), cy = OY + ch * (r + 0.5);
+            // halo
+            ctx.beginPath();
+            ctx.arc(cx, cy, lampR + 2, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(201,151,26,0.18)';
+            ctx.fill();
+            // body
+            ctx.beginPath();
+            ctx.arc(cx, cy, lampR, 0, Math.PI * 2);
+            ctx.fillStyle = '#f5c842';
+            ctx.strokeStyle = '#c9971a';
+            ctx.lineWidth = 1;
+            ctx.fill(); ctx.stroke();
+            // highlight
+            ctx.beginPath();
+            ctx.arc(cx - lampR * 0.28, cy - lampR * 0.28, lampR * 0.32, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fill();
+        }
+    }
+
+    // Step annotation bottom (x-direction)
+    const gy = OY + H + 14;
+    const x0 = OX + cw * 0, x1 = OX + cw * 1;
+    if (cols >= 1) {
+        ctx.strokeStyle = '#bbb'; ctx.lineWidth = 0.8;
+        [[OX, gy], [OX + W, gy]].forEach(([x]) => {
+            ctx.beginPath(); ctx.moveTo(x, gy - 4); ctx.lineTo(x, gy + 4); ctx.stroke();
+        });
+        ctx.beginPath(); ctx.moveTo(OX, gy); ctx.lineTo(OX + W, gy); ctx.stroke();
+        ctx.fillStyle = '#aaa';
+        ctx.font = `500 8px 'JetBrains Mono', monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('шаг ' + (a / cols).toFixed(2) + ' × ' + (b / rows).toFixed(2) + ' м', OX + W / 2, gy + 12);
+    }
+
+    // Stats
+    const { nnout, f, k_nerav, k_zapas } = gEData;
+    const N = rows * cols;
+    const e_actual = Math.floor((N * f * nnout) / (gRoom.a * gRoom.b * k_nerav * k_zapas * 100));
+    document.getElementById('statLayout').textContent = rows + '×' + cols;
+    document.getElementById('statE').textContent = e_actual + ' лк';
+    document.getElementById('statStep').textContent = (a / cols).toFixed(1) + '×' + (b / rows).toFixed(1);
+}
+
+// ── Calc ─────────────────────────────────────────────────────────────────
 function calc10() {
     const e = parseFloat(document.getElementById('e1').value);
     const a = parseFloat(document.getElementById('a1').value);
@@ -118,54 +432,63 @@ function calc10() {
     const f = parseFloat(document.getElementById('f1').value);
     const strategy = document.getElementById('type').value;
 
-    const k_nerav = 1.1;
-    const k_zapas = 1.7;
-    const h_susp = 0;
-    const h_work = 1;
-    const origin_lamp_count = 1;
+    const k_nerav = 1.1, k_zapas = 1.7;
+    const hp = h - 1;
+    if (hp <= 0) { alert("Высота помещения должна быть > 1 м"); return; }
 
     const kiData = {
-        Prizma: { 0.6: 62, 0.8: 74, 1.0: 84, 1.25: 94, 1.5: 101, 2.0: 111, 2.5: 117, 3.0: 121, 4.0: 127, 5.0: 130 },
-        Opal:   { 0.6: 44, 0.8: 53, 1.0: 61, 1.25: 69, 1.5: 75, 2.0: 84, 2.5: 89, 3.0: 93, 4.0: 98, 5.0: 101 }
+        Prizma: { 0.6:62, 0.8:74, 1.0:84, 1.25:94, 1.5:101, 2.0:111, 2.5:117, 3.0:121, 4.0:127, 5.0:130 },
+        Opal:   { 0.6:44, 0.8:53, 1.0:61, 1.25:69, 1.5:75,  2.0:84,  2.5:89,  3.0:93,  4.0:98,  5.0:101 }
     };
-
-    const currentKI = kiData[strategy];
-    const hp = h - h_susp - h_work;
-
-    if (hp <= 0) {
-        alert("Ошибка: Высота помещения должна быть больше рабочей поверхности (1 метр)");
-        return;
-    }
-
+    const ki = kiData[strategy];
     const nn = (a * b) / (hp * (a + b));
 
-    let nnout = 0;
-    if (nn < 0.7) nnout = currentKI[0.6];
-    else if (nn < 0.9) nnout = currentKI[0.8];
-    else if (nn < 1.125) nnout = currentKI[1.0];
-    else if (nn < 1.375) nnout = currentKI[1.25];
-    else if (nn < 1.75) nnout = currentKI[1.5];
-    else if (nn < 2.25) nnout = currentKI[2.0];
-    else if (nn < 2.75) nnout = currentKI[2.5];
-    else if (nn < 3.5) nnout = currentKI[3.0];
-    else if (nn < 4.5) nnout = currentKI[4.0];
-    else nnout = currentKI[5.0];
+    let nnout;
+    if      (nn < 0.7)   nnout = ki[0.6];
+    else if (nn < 0.9)   nnout = ki[0.8];
+    else if (nn < 1.125) nnout = ki[1.0];
+    else if (nn < 1.375) nnout = ki[1.25];
+    else if (nn < 1.75)  nnout = ki[1.5];
+    else if (nn < 2.25)  nnout = ki[2.0];
+    else if (nn < 2.75)  nnout = ki[2.5];
+    else if (nn < 3.5)   nnout = ki[3.0];
+    else if (nn < 4.5)   nnout = ki[4.0];
+    else                 nnout = ki[5.0];
 
-    const count = (e * a * b * k_nerav * k_zapas * 100) / (f * nnout * origin_lamp_count);
-    const N = Math.ceil(count);
-    const e_average = (N * f * nnout * origin_lamp_count) / (a * b * k_nerav * k_zapas * 100);
+    const countRaw = (e * a * b * k_nerav * k_zapas * 100) / (f * nnout);
+    const N_min = Math.ceil(countRaw);
 
-    const resultsDiv = document.getElementById('results');
-    const textDiv = document.getElementById('final_text');
-    
-    resultsDiv.style.display = 'block';
-    textDiv.innerHTML = "Количество светильников" + ": <span>" + N + " шт</span>, при минимальной средней освещенности <span>" + Math.floor(e_average) + " лк</span>";
+    gRoom = { a, b };
+    gEData = { nnout, f, k_nerav, k_zapas };
+
+    document.getElementById('resultCount').textContent = N_min + ' шт';
+    document.getElementById('resultSub').textContent =
+        'Расчётное: ' + countRaw.toFixed(2) + ' → округлено вверх';
+
+    const candidates = getLayoutCandidates(N_min, a, b);
+
+    const btnWrap = document.getElementById('variantButtons');
+    btnWrap.innerHTML = '';
+    candidates.forEach((cand, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'variant-btn' + (i === 0 ? ' active' : '');
+        const extra = cand.total > N_min ? `<span class="badge">+${cand.total - N_min}</span>` : '';
+        btn.innerHTML = cand.rows + '×' + cand.cols + extra;
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            drawRoom(cand.rows, cand.cols);
+        });
+        btnWrap.appendChild(btn);
+    });
+
+    document.getElementById('resultsCard').classList.add('visible');
+    drawRoom(candidates[0].rows, candidates[0].cols);
 }
 
-// Инициализация
+// ── Init ─────────────────────────────────────────────────────────────────
 loadFromURL();
 bindInputs();
 </script>
-
 </body>
 </html>
